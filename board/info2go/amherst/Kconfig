@@ -1,0 +1,15 @@
+if TARGET_AMHERST_QUAD
+
+config SYS_BOARD
+	default "amherst-quad"
+
+config SYS_VENDOR
+	default "info2go"
+
+config SYS_SOC
+	default "mx6"
+
+config SYS_CONFIG_NAME
+	default "amherst-quad"
+
+endif

@@ -771,6 +771,11 @@ config ARCH_UNIPHIER
 	select SPL
 	select OF_CONTROL
 
+config TARGET_AMHERST_QUAD
+	bool "Support mx6 amherst quad"
+	select CPU_V7
+	select SUPPORT_SPL
+
 endchoice
 
 source "arch/arm/mach-at91/Kconfig"
@@ -942,6 +947,8 @@ source "board/work-microwave/work_92105/Kconfig"
 source "board/xaeniax/Kconfig"
 source "board/xilinx/zynqmp/Kconfig"
 source "board/zipitz2/Kconfig"
+
+source "board/info2go/amherst/Kconfig"
 
 source "arch/arm/Kconfig.debug"
 

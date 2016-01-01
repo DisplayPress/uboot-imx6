@@ -1,0 +1,6 @@
+AMHERST BOARD
+M:	Steve Scheidecker <steve@info2gousa.com>
+S:	Maintained
+F:	board/info2go/amherst/
+F:	include/configs/amherst-quad.h
+F:	configs/amherst-quad_defconfig
