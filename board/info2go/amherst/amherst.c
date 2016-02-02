@@ -30,6 +30,9 @@
 #include <power/pfuze100_pmic.h>
 DECLARE_GLOBAL_DATA_PTR;
 
+#define GPIO_DR                 0x00
+#define GPIO_GDIR               0x04
+
 #define UART_PAD_CTRL  (PAD_CTL_PUS_100K_UP |			\
 	PAD_CTL_SPEED_MED | PAD_CTL_DSE_40ohm |			\
 	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
@@ -149,8 +152,8 @@ void mxc_iomux_set_gpr_register(int group, int start_bit, int num_bits, int valu
 static int setup_fec(void)
 {
 	int ret = 0;
-        /*struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
-        int ret;
+        struct iomuxc *iomuxc_regs = (struct iomuxc *)IOMUXC_BASE_ADDR;
+        /*int ret;
         u32 reg = 0;
 
         mxc_iomux_set_gpr_register(1, 21, 1, 1);*/
@@ -159,9 +162,9 @@ static int setup_fec(void)
         /*clrsetbits_le32(&iomuxc_regs->gpr[1], IOMUX_GPR1_FEC_MASK, 0); */
 
 	/* set GPIO_16 as ENET_REF_CLK_OUT */
-	setbits_le32(&iomux->gpr[1], IOMUXC_GPR1_ENET_CLK_SEL_MASK);
+	setbits_le32(&iomuxc_regs->gpr[1], IOMUXC_GPR1_ENET_CLK_SEL_MASK);
 
-        ret = enable_fec_anatop_clock(ENET_50MHz);
+        ret = enable_fec_anatop_clock(0, ENET_50MHZ);
 
         return ret;
 }
@@ -329,13 +332,39 @@ int board_mmc_init(bd_t *bis)
 
 			usdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
 			break;
-		/*case 1:
+		case 1:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc3_pads, ARRAY_SIZE(usdhc3_pads));
-			gpio_direction_input(USDHC3_CD_GPIO);
+			/*gpio_direction_input(USDHC3_CD_GPIO);*/
+
+			/* WiFi Power Down */
+			imx_iomux_v3_setup_pad(MX6_PAD_SD3_DAT4__GPIO7_IO01);
+
+			/* WiFi Reset */
+			imx_iomux_v3_setup_pad(MX6_PAD_SD3_RST__GPIO7_IO08);
+
+			reg = readl(GPIO7_BASE_ADDR + GPIO_GDIR);
+			reg |= (1 << 1);
+			reg |= (1 << 8);
+			writel(reg, GPIO7_BASE_ADDR + GPIO_GDIR);
+
+			/* Turn power on */
+			reg = readl(GPIO7_BASE_ADDR + GPIO_DR);
+			reg |= (1 << 1);
+			writel(reg, GPIO7_BASE_ADDR + GPIO_DR);
+
+			/* Reset chip */
+			reg = readl(GPIO7_BASE_ADDR + GPIO_DR);
+			reg &= ~(1 << 8);
+			writel(reg, GPIO7_BASE_ADDR + GPIO_DR);
+			mdelay(10);
+			reg = readl(GPIO7_BASE_ADDR + GPIO_DR);
+			reg |= (1 << 8);
+			writel(reg, GPIO7_BASE_ADDR + GPIO_DR);
+
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
-			break;*/
-		case 1:
+			break;
+		case 2:
 			imx_iomux_v3_setup_multiple_pads(
 				usdhc4_pads, ARRAY_SIZE(usdhc4_pads));
 			usdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC4_CLK);
@@ -568,7 +597,7 @@ int board_init(void)
 }
 
 // MOE: REMOVE
-static int pfuze_init(void)
+/*static int pfuze_init(void)
 {
 	struct pmic *p;
 	int ret;
@@ -584,46 +613,46 @@ static int pfuze_init(void)
 		return ret;
 
 	pmic_reg_read(p, PFUZE100_DEVICEID, &reg);
-	printf("PMIC:  PFUZE100 ID=0x%02x\n", reg);
+	printf("PMIC:  PFUZE100 ID=0x%02x\n", reg);*/
 
 	/* Increase VGEN3 from 2.5 to 2.8V */
-	pmic_reg_read(p, PFUZE100_VGEN3VOL, &reg);
+	/*pmic_reg_read(p, PFUZE100_VGEN3VOL, &reg);
 	reg &= ~0xf;
 	reg |= 0xa;
-	pmic_reg_write(p, PFUZE100_VGEN3VOL, reg);
+	pmic_reg_write(p, PFUZE100_VGEN3VOL, reg);*/
 
 	/* Increase VGEN5 from 2.8 to 3V */
-	pmic_reg_read(p, PFUZE100_VGEN5VOL, &reg);
+	/*pmic_reg_read(p, PFUZE100_VGEN5VOL, &reg);
 	reg &= ~0xf;
 	reg |= 0xc;
-	pmic_reg_write(p, PFUZE100_VGEN5VOL, reg);
+	pmic_reg_write(p, PFUZE100_VGEN5VOL, reg);*/
 
 	/* Set SW1AB stanby volage to 0.975V */
-	pmic_reg_read(p, PFUZE100_SW1ABSTBY, &reg);
+	/*pmic_reg_read(p, PFUZE100_SW1ABSTBY, &reg);
 	reg &= ~0x3f;
 	reg |= 0x1b;
-	pmic_reg_write(p, PFUZE100_SW1ABSTBY, reg);
+	pmic_reg_write(p, PFUZE100_SW1ABSTBY, reg);*/
 
 	/* Set SW1AB/VDDARM step ramp up time from 16us to 4us/25mV */
-	pmic_reg_read(p, PUZE_100_SW1ABCONF, &reg);
+	/*pmic_reg_read(p, PUZE_100_SW1ABCONF, &reg);
 	reg &= ~0xc0;
 	reg |= 0x40;
-	pmic_reg_write(p, PUZE_100_SW1ABCONF, reg);
+	pmic_reg_write(p, PUZE_100_SW1ABCONF, reg);*/
 
 	/* Set SW1C standby voltage to 0.975V */
-	pmic_reg_read(p, PFUZE100_SW1CSTBY, &reg);
+	/*pmic_reg_read(p, PFUZE100_SW1CSTBY, &reg);
 	reg &= ~0x3f;
 	reg |= 0x1b;
-	pmic_reg_write(p, PFUZE100_SW1CSTBY, reg);
+	pmic_reg_write(p, PFUZE100_SW1CSTBY, reg);*/
 
 	/* Set SW1C/VDDSOC step ramp up time from 16us to 4us/25mV */
-	pmic_reg_read(p, PFUZE100_SW1CCONF, &reg);
+	/*pmic_reg_read(p, PFUZE100_SW1CCONF, &reg);
 	reg &= ~0xc0;
 	reg |= 0x40;
 	pmic_reg_write(p, PFUZE100_SW1CCONF, reg);
 
 	return 0;
-}
+}*/
 
 /*#ifdef CONFIG_MXC_SPI
 int board_spi_cs_gpio(unsigned bus, unsigned cs)
@@ -647,7 +676,7 @@ int board_late_init(void)
 #ifdef CONFIG_CMD_BMODE
 	add_board_boot_modes(board_boot_modes);
 #endif
-	//pfuze_init();
+	/*pfuze_init();*/
 
 	return 0;
 }
