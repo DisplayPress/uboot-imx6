@@ -214,7 +214,7 @@
 	EMMC_ENV	  \
 	"smp=" CONFIG_SYS_NOSMP "\0"\
 	"mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
-		"root=${mmcroot}\0" \
+		"root=${mmcroot} video=mxcfb0:dev=hdmi,1920x1080M@60,if=RGB16,bpp=16\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
